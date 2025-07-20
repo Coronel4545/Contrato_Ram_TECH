@@ -63,41 +63,84 @@ O contrato `RAM_CEO_TOKEN` é um token BEP20/ERC20 avançado, desenvolvido para 
 
 ---
 
-## Fluxograma do Funcionamento do Contrato
+## Fluxograma Detalhado do Funcionamento do Contrato
 
 ```mermaid
 flowchart TD
-    A[Usuário inicia interação] --> B{Tipo de operação}
+    A[Usuário/Admin chama função] --> B{Tipo de função}
     B -- Transferência --> C1[Função transfer/transferFrom]
     C1 --> D1{Tipo de transferência}
     D1 -- Compra (par -> usuário) --> E1[Aplica buyFee, burnFee, liquidityFee]
-    E1 --> F1[Deduz taxas do destinatário]
-    F1 --> G1[Atualiza saldos e supply]
     D1 -- Venda (usuário -> par) --> E2[Aplica sellFee, burnFee, liquidityFee]
-    E2 --> F2[Deduz taxas do remetente]
-    F2 --> G2[Atualiza saldos e supply]
-    D1 -- Transferência normal --> G3[Sem taxas, apenas transfere]
-    G1 & G2 & G3 --> H{Saldo do contrato >= amountSwapTheBalance?}
-    H -- Sim --> I[_swapTokensForBNB]
-    I --> J[Swap tokens por BNB]
-    J --> K[Adiciona liquidez]
-    J --> L[Envia BNB para marketingWallet]
-    J --> M[Queima tokens se burnInternal]
-    H -- Não --> N[Fim da transferência]
-    B -- Função administrativa --> O[Funções admin/owner]
-    O --> P1[setEnableInternalSwap]
-    O --> P2[setAddressExempt]
-    O --> P3[setSwapAmountNew]
-    O --> P4[setBurnInternalStatus]
-    O --> P5[setNewPair]
-    O --> P6[setMarketingWallet]
-    O --> P7[forceSwap]
-    O --> P8[withdrawNativeBNB]
-    O --> P9[withdrawTokens]
-    O --> P10[setNewCa]
-    O --> P11[additionalBurnTokens]
-    P1 & P2 & P3 & P4 & P5 & P6 & P7 & P8 & P9 & P10 & P11 --> N
-    N[Operação concluída]
+    D1 -- Transferência normal --> E3[Sem taxas]
+    E1 & E2 & E3 --> F[Atualiza saldos e supply]
+    F --> G{Saldo contrato >= amountSwapTheBalance?}
+    G -- Sim --> H[_swapTokensForBNB]
+    H --> I[Distribui BNB: liquidez, marketing, queima (se burnInternal)]
+    G -- Não --> J[Fim da transferência]
+    H --> J
+
+    B -- Função administrativa --> K{Qual função?}
+
+    %% setEnableInternalSwap
+    K -- setEnableInternalSwap(_value) --> L1{_value é true ou false?}
+    L1 -- true --> M1[Habilita swap interno]
+    L1 -- false --> M2[Desabilita swap interno]
+    M1 & M2 --> Z
+
+    %% setAddressExempt
+    K -- setAddressExempt(account, exempt) --> L2{exempt é true ou false?}
+    L2 -- true --> M3[Isenta account de taxas]
+    L2 -- false --> M4[Remove isenção de account]
+    M3 & M4 --> Z
+
+    %% setSwapAmountNew
+    K -- setSwapAmountNew(_newAmountSwap, _confirm) --> L3{_confirm é true?}
+    L3 -- true --> M5[Atualiza amountSwapTheBalance]
+    L3 -- false --> M6[Não altera valor]
+    M5 & M6 --> Z
+
+    %% setBurnInternalStatus
+    K -- setBurnInternalStatus(_valueBurn) --> L4{_valueBurn é true ou false?}
+    L4 -- true --> M7[Habilita queima interna]
+    L4 -- false --> M8[Desabilita queima interna]
+    M7 & M8 --> Z
+
+    %% setNewPair
+    K -- setNewPair(_newPair) --> L5{_newPair já existe?}
+    L5 -- Não --> M9[Adiciona novo par]
+    L5 -- Sim --> M10[Rejeita: par já existe]
+    M9 & M10 --> Z
+
+    %% setMarketingWallet
+    K -- setMarketingWallet(newMarketingWallet) --> M11[Atualiza carteira de marketing]
+    M11 --> Z
+
+    %% forceSwap
+    K -- forceSwap(_confirm) --> L6{_confirm é true?}
+    L6 -- true --> M12[Força swap de tokens por BNB]
+    L6 -- false --> M13[Não executa swap]
+    M12 & M13 --> Z
+
+    %% withdrawNativeBNB
+    K -- withdrawNativeBNB() --> M14[Transfere BNB para marketingWallet]
+    M14 --> Z
+
+    %% withdrawTokens
+    K -- withdrawTokens(token) --> M15[Transfere tokens para restitutionAddress]
+    M15 --> Z
+
+    %% setNewCa
+    K -- setNewCa(_newCa) --> M16[Atualiza endereço ca]
+    M16 --> Z
+
+    %% additionalBurnTokens
+    K -- additionalBurnTokens(_amountBurn) --> L7{_amountBurn > 0 e permitido?}
+    L7 -- Sim --> M17[Queima tokens do ca]
+    L7 -- Não --> M18[Rejeita operação]
+    M17 & M18 --> Z
+
+    Z[Operação administrativa concluída]
 ```
 
 ---
