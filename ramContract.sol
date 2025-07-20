@@ -135,7 +135,7 @@ abstract contract nonReentrant {
  * @title RAM_CEO_TOKEN
  * @notice Main token contract implementing BEP20/ERC20 with advanced features.
  */
-contract RAM_CEO_TOKEN is Context, IBEP20, Ownable, nonReentrant {
+contract RAM_TECH_TOKEN is Context, IBEP20, Ownable, nonReentrant {
     // --- Mappings ---
     mapping (address => uint256) private _balances; ///< Stores balances of each address
     mapping (address => mapping (address => uint256)) private _allowances; ///< Stores allowances
