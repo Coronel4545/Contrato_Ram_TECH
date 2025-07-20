@@ -1,111 +1,120 @@
-# RAM TECH Token (RAM)
+# RAM TECH Token (RAM_CEO_TOKEN)
 
 ## Visão Geral
 
-O contrato **RAM TECH Token (RAM)** é um token BEP20/ERC20 desenvolvido para operar na Binance Smart Chain (BSC), com recursos avançados de controle de taxas, liquidez, swap interno, queima de tokens, administração e proteção para investidores. O contrato foi projetado para ser transparente, seguro e flexível, permitindo ajustes administrativos sem comprometer a segurança dos holders.
+O contrato `RAM_CEO_TOKEN` é um token BEP20/ERC20 avançado, desenvolvido para operar na Binance Smart Chain (BSC), com funcionalidades de taxas dinâmicas, liquidez automatizada, queima de tokens, controle administrativo e integração com PancakeSwap.
 
 ---
 
 ## Funcionalidades Principais
 
-- **Compatibilidade BEP20/ERC20**: Implementa todas as funções padrão de um token BEP20/ERC20.
 - **Taxas de Compra e Venda**: Taxas configuráveis para operações de compra e venda.
-- **Taxa de Queima e Liquidez**: Parte das taxas é destinada à queima de tokens e à adição de liquidez.
-- **Swap Interno**: Conversão automática de tokens acumulados em BNB para a carteira de marketing.
-- **Administração Segura**: Funções administrativas restritas ao owner e ao admin, com controle de permissões.
-- **Exceções de Taxas**: Endereços podem ser isentos de taxas.
-- **Limite de Queima**: Proteção para não queimar além do mínimo definido (21M tokens).
+- **Taxa de Liquidez**: Parte das taxas é usada para adicionar liquidez automaticamente.
+- **Taxa de Queima (Burn)**: Tokens são queimados em cada transação, reduzindo o supply.
+- **Carteira de Marketing**: Parte das taxas é enviada para uma carteira de marketing.
+- **Controle de Swap Interno**: O contrato pode trocar tokens acumulados por BNB automaticamente.
+- **Administração Segura**: Funções administrativas separadas entre owner e admin.
+- **Exceções de Taxa**: Endereços podem ser isentos de taxas.
+- **Limite de Queima**: Não permite que o supply caia abaixo de 21 milhões de tokens em queimas automáticas.
 - **Gestão de Pares**: Suporte a múltiplos pares de liquidez.
-- **Eventos**: Emissão de eventos detalhados para monitoramento de todas as ações relevantes.
 
 ---
 
-## Fluxo de Transferência
+## Variáveis Importantes
 
-```mermaid
-flowchart TD
-    A[Início da Transferência] --> B{Tipo de Transferência?}
-    B -- Compra (pair -> user) --> C[Aplica Taxa de Compra]
-    B -- Venda (user -> pair) --> D[Aplica Taxa de Venda]
-    B -- Transferência Normal --> E[Sem Taxa]
-    C --> F[Deduz Queima, Liquidez, Marketing]
-    D --> F
-    E --> G[Transfere Valor Total]
-    F --> G[Transfere Valor Líquido]
-    G --> H{Saldo do Contrato >= Limite de Swap?}
-    H -- Sim --> I[Executa Swap Interno]
-    H -- Não --> J[Fim]
-    I --> J
-```
+- `buyFee`, `sellFee`, `burnFee`, `liquidityFee`: Taxas percentuais (em relação ao denominador, padrão 100).
+- `marketingWallet`: Endereço que recebe a taxa de marketing.
+- `admin`, `ca`: Endereços administrativos para funções sensíveis.
+- `enableInternalSwap`: Habilita/desabilita o swap automático de tokens por BNB.
+- `burnInternal`: Habilita/desabilita a queima interna de tokens.
+- `amountSwapTheBalance`: Quantidade de tokens que, ao ser atingida no contrato, dispara o swap automático.
+- `stopBurnTx`: Supply mínimo para queima automática (21 milhões de tokens).
+- `newPair`: Lista de pares adicionais de liquidez.
 
 ---
 
-## Estrutura do Contrato
+## Funções Principais
 
-- **Interfaces**: IPancakeFactory, IPancakeRouter, IBEP20
-- **Heranças**: Context, Ownable, nonReentrant
-- **Variáveis Importantes**:
-  - `totalSupply`: Suprimento total (500M RAM)
-  - `buyFee`, `sellFee`, `burnFee`, `liquidityFee`: Taxas configuráveis
-  - `marketingWallet`: Carteira de marketing
-  - `admin`, `ca`: Endereços administrativos
-  - `enableInternalSwap`, `burnInternal`: Flags de controle
-  - `amountSwapTheBalance`: Limite para swap automático
-  - `stopBurnTx`: Limite mínimo de supply para queima
-  - `newPair`: Lista de pares adicionais
+### Funções BEP20/ERC20
+- `transfer`, `transferFrom`, `approve`, `allowance`, `balanceOf`, `totalSupply`, `decimals`, `symbol`, `name`
 
----
+### Funções de Taxa/Administração
+- `setBuyFee(uint256)`, `setSellFee(uint256)`, `setLiquidityFee(uint256)`, `setBurnFee(uint256)`
+- `setEnableInternalSwap(bool)`, `setAddressExempt(address,bool)`, `setSwapAmountNew(uint256,bool)`, `setBurnInternalStatus(bool)`
+- `setNewPair(address)`, `setMarketingWallet(address)`, `forceSwap(bool)`, `withdrawNativeBNB()`, `withdrawTokens(address)`, `setNewCa(address)`, `additionalBurnTokens(uint256)`
 
-## Funções Administrativas
-
-- `setTradingStatus(bool)`: Habilita/desabilita trading
-- `setBuyFee(uint256)`, `setSellFee(uint256)`, `setLiquidityFee(uint256)`, `setBurnFee(uint256)`: Ajusta taxas
-- `setEnableInternalSwap(bool)`: Habilita/desabilita swap interno
-- `setAddressExempt(address, bool)`: Define isenção de taxas
-- `setSwapAmountNew(uint256, bool)`: Ajusta limite de swap
-- `setBurnInternalStatus(bool)`: Habilita/desabilita queima interna
-- `setNewPair(address)`: Adiciona novo par de liquidez
-- `setMarketingWallet(address)`: Altera carteira de marketing
-- `forceSwap(bool)`: Força swap manual
-- `withdrawNativeBNB()`: Retira BNB acumulado
-- `withdrawTokens(address)`: Retira tokens acumulados
-- `setNewCa(address)`: Altera endereço admin secundário
-- `additionalBurnTokens(uint256)`: Queima tokens manualmente (admin)
+### Lógica de Transferência
+- **Compra**: Taxas deduzidas do destinatário.
+- **Venda**: Taxas deduzidas do remetente.
+- **Transferência normal**: Sem taxas.
+- **Swap automático**: Quando o saldo do contrato atinge `amountSwapTheBalance`, tokens são trocados por BNB, parte vai para liquidez, parte para marketing e pode haver queima.
 
 ---
 
-## Segurança
-
-- **Reentrância**: Uso do modificador `nonReentrantGuard`.
-- **Permissões**: Funções sensíveis restritas ao owner ou admin.
-- **Limite de Queima**: Não permite que o supply caia abaixo de 21M tokens.
-- **Exceções**: Endereços críticos são isentos de taxas.
+## Controle de Acesso
+- **Owner**: Pode ativar/desativar trading e ajustar taxas.
+- **Admin**: Pode executar funções de swap, isenção, ajuste de pares, marketing, queima adicional, etc.
+- **Exceções**: Endereços podem ser isentos de taxas e restrições.
 
 ---
 
 ## Eventos
-
-O contrato emite eventos para todas as ações administrativas e operacionais relevantes, facilitando o monitoramento e auditoria.
-
----
-
-## Contatos do Desenvolvedor
-
-- **Telegram**: https://t.me/AbraaoOliveira47
-- **Facebook**: https://www.facebook.com/xXPerfiladorXx
-- **WhatsApp**: (74) 9 9194-3796
-- **Dev**: Abraao da Silva Oliveira (CPF: 076.600.285-37)
+- Diversos eventos para rastrear mudanças de taxas, swaps, queimas, adição de liquidez, retiradas, etc.
 
 ---
 
-## Observações Finais
+## Fluxograma do Funcionamento do Contrato
 
-- O owner renuncia a propriedade após o lançamento, restando apenas funções administrativas seguras ao admin.
-- O contrato foi projetado para máxima transparência e proteção dos investidores.
-- Todas as taxas e parâmetros podem ser ajustados dentro de limites seguros.
+```mermaid
+flowchart TD
+    A[Usuário inicia interação] --> B{Tipo de operação}
+    B -- Transferência --> C1[Função transfer/transferFrom]
+    C1 --> D1{Tipo de transferência}
+    D1 -- Compra (par -> usuário) --> E1[Aplica buyFee, burnFee, liquidityFee]
+    E1 --> F1[Deduz taxas do destinatário]
+    F1 --> G1[Atualiza saldos e supply]
+    D1 -- Venda (usuário -> par) --> E2[Aplica sellFee, burnFee, liquidityFee]
+    E2 --> F2[Deduz taxas do remetente]
+    F2 --> G2[Atualiza saldos e supply]
+    D1 -- Transferência normal --> G3[Sem taxas, apenas transfere]
+    G1 & G2 & G3 --> H{Saldo do contrato >= amountSwapTheBalance?}
+    H -- Sim --> I[_swapTokensForBNB]
+    I --> J[Swap tokens por BNB]
+    J --> K[Adiciona liquidez]
+    J --> L[Envia BNB para marketingWallet]
+    J --> M[Queima tokens se burnInternal]
+    H -- Não --> N[Fim da transferência]
+    B -- Função administrativa --> O[Funções admin/owner]
+    O --> P1[setEnableInternalSwap]
+    O --> P2[setAddressExempt]
+    O --> P3[setSwapAmountNew]
+    O --> P4[setBurnInternalStatus]
+    O --> P5[setNewPair]
+    O --> P6[setMarketingWallet]
+    O --> P7[forceSwap]
+    O --> P8[withdrawNativeBNB]
+    O --> P9[withdrawTokens]
+    O --> P10[setNewCa]
+    O --> P11[additionalBurnTokens]
+    P1 & P2 & P3 & P4 & P5 & P6 & P7 & P8 & P9 & P10 & P11 --> N
+    N[Operação concluída]
+```
+
+---
+
+## Observações
+- O contrato não utiliza Permit2, UniversalRouter ou qualquer padrão de aprovação avançada.
+- Todas as interações externas são com PancakeSwap (router, factory) e contratos BEP20.
+- Comentários e mensagens de erro estão em inglês, conforme convenção do projeto.
+
+---
+
+## Contato do Desenvolvedor
+- Telegram: https://t.me/AbraaoOliveira47
+- Facebook: https://www.facebook.com/xXPerfiladorXx
+- WhatsApp: (74) 9 9194-3796
 
 ---
 
 ## Licença
-
 MIT
