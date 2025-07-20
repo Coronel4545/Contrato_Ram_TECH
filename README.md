@@ -68,79 +68,37 @@ O contrato `RAM_CEO_TOKEN` é um token BEP20/ERC20 avançado, desenvolvido para 
 ```mermaid
 flowchart TD
     A[Usuário/Admin chama função] --> B{Tipo de função}
-    B -- Transferência --> C1[Função transfer/transferFrom]
+    B -- Transferência --> C1[Função transfer ou transferFrom]
     C1 --> D1{Tipo de transferência}
-    D1 -- Compra (par -> usuário) --> E1[Aplica buyFee, burnFee, liquidityFee]
-    D1 -- Venda (usuário -> par) --> E2[Aplica sellFee, burnFee, liquidityFee]
+    D1 -- Compra (par para usuário) --> E1[Aplica taxas de compra]
+    D1 -- Venda (usuário para par) --> E2[Aplica taxas de venda]
     D1 -- Transferência normal --> E3[Sem taxas]
     E1 & E2 & E3 --> F[Atualiza saldos e supply]
     F --> G{Saldo contrato >= amountSwapTheBalance?}
-    G -- Sim --> H[_swapTokensForBNB]
-    H --> I[Distribui BNB: liquidez, marketing, queima (se burnInternal)]
+    G -- Sim --> H[Executa swapTokensForBNB]
+    H --> I[Distribui BNB: liquidez/marketing/queima]
     G -- Não --> J[Fim da transferência]
     H --> J
 
     B -- Função administrativa --> K{Qual função?}
-
-    %% setEnableInternalSwap
-    K -- setEnableInternalSwap(_value) --> L1{_value é true ou false?}
-    L1 -- true --> M1[Habilita swap interno]
-    L1 -- false --> M2[Desabilita swap interno]
-    M1 & M2 --> Z
-
-    %% setAddressExempt
-    K -- setAddressExempt(account, exempt) --> L2{exempt é true ou false?}
-    L2 -- true --> M3[Isenta account de taxas]
-    L2 -- false --> M4[Remove isenção de account]
-    M3 & M4 --> Z
-
-    %% setSwapAmountNew
-    K -- setSwapAmountNew(_newAmountSwap, _confirm) --> L3{_confirm é true?}
-    L3 -- true --> M5[Atualiza amountSwapTheBalance]
-    L3 -- false --> M6[Não altera valor]
-    M5 & M6 --> Z
-
-    %% setBurnInternalStatus
-    K -- setBurnInternalStatus(_valueBurn) --> L4{_valueBurn é true ou false?}
-    L4 -- true --> M7[Habilita queima interna]
-    L4 -- false --> M8[Desabilita queima interna]
-    M7 & M8 --> Z
-
-    %% setNewPair
-    K -- setNewPair(_newPair) --> L5{_newPair já existe?}
-    L5 -- Não --> M9[Adiciona novo par]
-    L5 -- Sim --> M10[Rejeita: par já existe]
-    M9 & M10 --> Z
-
-    %% setMarketingWallet
-    K -- setMarketingWallet(newMarketingWallet) --> M11[Atualiza carteira de marketing]
-    M11 --> Z
-
-    %% forceSwap
-    K -- forceSwap(_confirm) --> L6{_confirm é true?}
-    L6 -- true --> M12[Força swap de tokens por BNB]
-    L6 -- false --> M13[Não executa swap]
-    M12 & M13 --> Z
-
-    %% withdrawNativeBNB
+    K -- setEnableInternalSwap(true) --> M1[Habilita swap interno]
+    K -- setEnableInternalSwap(false) --> M2[Desabilita swap interno]
+    K -- setAddressExempt(account, true) --> M3[Isenta account de taxas]
+    K -- setAddressExempt(account, false) --> M4[Remove isenção de account]
+    K -- setSwapAmountNew(valor, true) --> M5[Atualiza amountSwapTheBalance]
+    K -- setSwapAmountNew(valor, false) --> M6[Não altera valor]
+    K -- setBurnInternalStatus(true) --> M7[Habilita queima interna]
+    K -- setBurnInternalStatus(false) --> M8[Desabilita queima interna]
+    K -- setNewPair(novoPar) --> M9[Adiciona novo par]
+    K -- setMarketingWallet(novaWallet) --> M11[Atualiza carteira de marketing]
+    K -- forceSwap(true) --> M12[Força swap de tokens por BNB]
+    K -- forceSwap(false) --> M13[Não executa swap]
     K -- withdrawNativeBNB() --> M14[Transfere BNB para marketingWallet]
-    M14 --> Z
-
-    %% withdrawTokens
     K -- withdrawTokens(token) --> M15[Transfere tokens para restitutionAddress]
-    M15 --> Z
-
-    %% setNewCa
-    K -- setNewCa(_newCa) --> M16[Atualiza endereço ca]
-    M16 --> Z
-
-    %% additionalBurnTokens
-    K -- additionalBurnTokens(_amountBurn) --> L7{_amountBurn > 0 e permitido?}
-    L7 -- Sim --> M17[Queima tokens do ca]
-    L7 -- Não --> M18[Rejeita operação]
-    M17 & M18 --> Z
-
-    Z[Operação administrativa concluída]
+    K -- setNewCa(novoCa) --> M16[Atualiza endereço ca]
+    K -- additionalBurnTokens(valor > 0) --> M17[Queima tokens do ca]
+    K -- additionalBurnTokens(valor <= 0) --> M18[Rejeita operação]
+    M1 & M2 & M3 & M4 & M5 & M6 & M7 & M8 & M9 & M11 & M12 & M13 & M14 & M15 & M16 & M17 & M18 --> Z[Operação administrativa concluída]
 ```
 
 ---
