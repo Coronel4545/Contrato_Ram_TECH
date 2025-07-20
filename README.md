@@ -1,121 +1,121 @@
 # RAM TECH Token (RAM_CEO_TOKEN)
 
-## Visão Geral
+## Overview
 
-O contrato `RAM_CEO_TOKEN` é um token BEP20/ERC20 avançado, desenvolvido para operar na Binance Smart Chain (BSC), com funcionalidades de taxas dinâmicas, liquidez automatizada, queima de tokens, controle administrativo e integração com PancakeSwap.
-
----
-
-## Funcionalidades Principais
-
-- **Taxas de Compra e Venda**: Taxas configuráveis para operações de compra e venda.
-- **Taxa de Liquidez**: Parte das taxas é usada para adicionar liquidez automaticamente.
-- **Taxa de Queima (Burn)**: Tokens são queimados em cada transação, reduzindo o supply.
-- **Carteira de Marketing**: Parte das taxas é enviada para uma carteira de marketing.
-- **Controle de Swap Interno**: O contrato pode trocar tokens acumulados por BNB automaticamente.
-- **Administração Segura**: Funções administrativas separadas entre owner e admin.
-- **Exceções de Taxa**: Endereços podem ser isentos de taxas.
-- **Limite de Queima**: Não permite que o supply caia abaixo de 21 milhões de tokens em queimas automáticas.
-- **Gestão de Pares**: Suporte a múltiplos pares de liquidez.
+The `RAM_CEO_TOKEN` contract is an advanced BEP20/ERC20 token designed to operate on the Binance Smart Chain (BSC), featuring dynamic fees, automated liquidity, token burning, administrative control, and PancakeSwap integration.
 
 ---
 
-## Variáveis Importantes
+## Main Features
 
-- `buyFee`, `sellFee`, `burnFee`, `liquidityFee`: Taxas percentuais (em relação ao denominador, padrão 100).
-- `marketingWallet`: Endereço que recebe a taxa de marketing.
-- `admin`, `ca`: Endereços administrativos para funções sensíveis.
-- `enableInternalSwap`: Habilita/desabilita o swap automático de tokens por BNB.
-- `burnInternal`: Habilita/desabilita a queima interna de tokens.
-- `amountSwapTheBalance`: Quantidade de tokens que, ao ser atingida no contrato, dispara o swap automático.
-- `stopBurnTx`: Supply mínimo para queima automática (21 milhões de tokens).
-- `newPair`: Lista de pares adicionais de liquidez.
+- **Buy and Sell Fees**: Configurable fees for buy and sell operations.
+- **Liquidity Fee**: Part of the fees is used to automatically add liquidity.
+- **Burn Fee**: Tokens are burned in each transaction, reducing the supply.
+- **Marketing Wallet**: Part of the fees is sent to a marketing wallet.
+- **Internal Swap Control**: The contract can automatically swap accumulated tokens for BNB.
+- **Secure Administration**: Administrative functions are separated between owner and admin.
+- **Fee Exemptions**: Addresses can be exempted from fees.
+- **Burn Limit**: The supply cannot fall below 21 million tokens through automatic burns.
+- **Pair Management**: Supports multiple liquidity pairs.
 
 ---
 
-## Funções Principais
+## Important Variables
 
-### Funções BEP20/ERC20
+- `buyFee`, `sellFee`, `burnFee`, `liquidityFee`: Percentage fees (relative to the denominator, default 100).
+- `marketingWallet`: Address that receives the marketing fee.
+- `admin`, `ca`: Administrative addresses for sensitive functions.
+- `enableInternalSwap`: Enables/disables automatic token swap for BNB.
+- `burnInternal`: Enables/disables internal token burning.
+- `amountSwapTheBalance`: Amount of tokens that, when reached in the contract, triggers the automatic swap.
+- `stopBurnTx`: Minimum supply for automatic burning (21 million tokens).
+- `newPair`: List of additional liquidity pairs.
+
+---
+
+## Main Functions
+
+### BEP20/ERC20 Functions
 - `transfer`, `transferFrom`, `approve`, `allowance`, `balanceOf`, `totalSupply`, `decimals`, `symbol`, `name`
 
-### Funções de Taxa/Administração
+### Fee/Administration Functions
 - `setBuyFee(uint256)`, `setSellFee(uint256)`, `setLiquidityFee(uint256)`, `setBurnFee(uint256)`
 - `setEnableInternalSwap(bool)`, `setAddressExempt(address,bool)`, `setSwapAmountNew(uint256,bool)`, `setBurnInternalStatus(bool)`
 - `setNewPair(address)`, `setMarketingWallet(address)`, `forceSwap(bool)`, `withdrawNativeBNB()`, `withdrawTokens(address)`, `setNewCa(address)`, `additionalBurnTokens(uint256)`
 
-### Lógica de Transferência
-- **Compra**: Taxas deduzidas do destinatário.
-- **Venda**: Taxas deduzidas do remetente.
-- **Transferência normal**: Sem taxas.
-- **Swap automático**: Quando o saldo do contrato atinge `amountSwapTheBalance`, tokens são trocados por BNB, parte vai para liquidez, parte para marketing e pode haver queima.
+### Transfer Logic
+- **Buy**: Fees are deducted from the recipient.
+- **Sell**: Fees are deducted from the sender.
+- **Normal Transfer**: No fees.
+- **Automatic Swap**: When the contract balance reaches `amountSwapTheBalance`, tokens are swapped for BNB, part goes to liquidity, part to marketing, and burning may occur.
 
 ---
 
-## Controle de Acesso
-- **Owner**: Pode ativar/desativar trading e ajustar taxas.
-- **Admin**: Pode executar funções de swap, isenção, ajuste de pares, marketing, queima adicional, etc.
-- **Exceções**: Endereços podem ser isentos de taxas e restrições.
+## Access Control
+- **Owner**: Can enable/disable trading and adjust fees.
+- **Admin**: Can execute swap, exemption, pair adjustment, marketing, additional burn, etc.
+- **Exemptions**: Addresses can be exempted from fees and restrictions.
 
 ---
 
-## Eventos
-- Diversos eventos para rastrear mudanças de taxas, swaps, queimas, adição de liquidez, retiradas, etc.
+## Events
+- Various events to track fee changes, swaps, burns, liquidity addition, withdrawals, etc.
 
 ---
 
-## Fluxograma Detalhado do Funcionamento do Contrato
+## Detailed Contract Flowchart
 
 ```mermaid
 flowchart TD
-    A[Usuário/Admin chama função] --> B{Tipo de função}
-    B -- Transferência --> C1[Função transfer ou transferFrom]
-    C1 --> D1{Tipo de transferência}
-    D1 -- Compra (par para usuário) --> E1[Aplica taxas de compra]
-    D1 -- Venda (usuário para par) --> E2[Aplica taxas de venda]
-    D1 -- Transferência normal --> E3[Sem taxas]
-    E1 & E2 & E3 --> F[Atualiza saldos e supply]
-    F --> G{Saldo contrato >= amountSwapTheBalance?}
-    G -- Sim --> H[Executa swapTokensForBNB]
-    H --> I[Distribui BNB: liquidez/marketing/queima]
-    G -- Não --> J[Fim da transferência]
+    A[User/Admin calls function] --> B{Function type}
+    B -- Transfer --> C1[transfer or transferFrom function]
+    C1 --> D1{Transfer type}
+    D1 -- Buy (pair to user) --> E1[Apply buy fees]
+    D1 -- Sell (user to pair) --> E2[Apply sell fees]
+    D1 -- Normal transfer --> E3[No fees]
+    E1 & E2 & E3 --> F[Update balances and supply]
+    F --> G{Contract balance >= amountSwapTheBalance?}
+    G -- Yes --> H[Execute swapTokensForBNB]
+    H --> I[Distribute BNB: liquidity/marketing/burn]
+    G -- No --> J[End of transfer]
     H --> J
 
-    B -- Função administrativa --> K{Qual função?}
-    K -- setEnableInternalSwap(true) --> M1[Habilita swap interno]
-    K -- setEnableInternalSwap(false) --> M2[Desabilita swap interno]
-    K -- setAddressExempt(account, true) --> M3[Isenta account de taxas]
-    K -- setAddressExempt(account, false) --> M4[Remove isenção de account]
-    K -- setSwapAmountNew(valor, true) --> M5[Atualiza amountSwapTheBalance]
-    K -- setSwapAmountNew(valor, false) --> M6[Não altera valor]
-    K -- setBurnInternalStatus(true) --> M7[Habilita queima interna]
-    K -- setBurnInternalStatus(false) --> M8[Desabilita queima interna]
-    K -- setNewPair(novoPar) --> M9[Adiciona novo par]
-    K -- setMarketingWallet(novaWallet) --> M11[Atualiza carteira de marketing]
-    K -- forceSwap(true) --> M12[Força swap de tokens por BNB]
-    K -- forceSwap(false) --> M13[Não executa swap]
-    K -- withdrawNativeBNB() --> M14[Transfere BNB para marketingWallet]
-    K -- withdrawTokens(token) --> M15[Transfere tokens para restitutionAddress]
-    K -- setNewCa(novoCa) --> M16[Atualiza endereço ca]
-    K -- additionalBurnTokens(valor > 0) --> M17[Queima tokens do ca]
-    K -- additionalBurnTokens(valor <= 0) --> M18[Rejeita operação]
-    M1 & M2 & M3 & M4 & M5 & M6 & M7 & M8 & M9 & M11 & M12 & M13 & M14 & M15 & M16 & M17 & M18 --> Z[Operação administrativa concluída]
+    B -- Administrative function --> K{Which function?}
+    K -- setEnableInternalSwap(true) --> M1[Enable internal swap]
+    K -- setEnableInternalSwap(false) --> M2[Disable internal swap]
+    K -- setAddressExempt(account, true) --> M3[Exempt account from fees]
+    K -- setAddressExempt(account, false) --> M4[Remove account exemption]
+    K -- setSwapAmountNew(value, true) --> M5[Update amountSwapTheBalance]
+    K -- setSwapAmountNew(value, false) --> M6[Do not change value]
+    K -- setBurnInternalStatus(true) --> M7[Enable internal burn]
+    K -- setBurnInternalStatus(false) --> M8[Disable internal burn]
+    K -- setNewPair(newPair) --> M9[Add new pair]
+    K -- setMarketingWallet(newWallet) --> M11[Update marketing wallet]
+    K -- forceSwap(true) --> M12[Force token swap for BNB]
+    K -- forceSwap(false) --> M13[Do not execute swap]
+    K -- withdrawNativeBNB() --> M14[Transfer BNB to marketingWallet]
+    K -- withdrawTokens(token) --> M15[Transfer tokens to restitutionAddress]
+    K -- setNewCa(newCa) --> M16[Update ca address]
+    K -- additionalBurnTokens(value > 0) --> M17[Burn tokens from ca]
+    K -- additionalBurnTokens(value <= 0) --> M18[Reject operation]
+    M1 & M2 & M3 & M4 & M5 & M6 & M7 & M8 & M9 & M11 & M12 & M13 & M14 & M15 & M16 & M17 & M18 --> Z[Administrative operation completed]
 ```
 
 ---
 
-## Observações
-- O contrato não utiliza Permit2, UniversalRouter ou qualquer padrão de aprovação avançada.
-- Todas as interações externas são com PancakeSwap (router, factory) e contratos BEP20.
-- Comentários e mensagens de erro estão em inglês, conforme convenção do projeto.
+## Notes
+- The contract does not use Permit2, UniversalRouter, or any advanced approval standard.
+- All external interactions are with PancakeSwap (router, factory) and BEP20 contracts.
+- Comments and error messages are in English, as per project convention.
 
 ---
 
-## Contato do Desenvolvedor
+## Developer Contact
 - Telegram: https://t.me/AbraaoOliveira47
 - Facebook: https://www.facebook.com/xXPerfiladorXx
 - WhatsApp: (74) 9 9194-3796
 
 ---
 
-## Licença
+## License
 MIT
