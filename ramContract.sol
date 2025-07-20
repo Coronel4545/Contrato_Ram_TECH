@@ -132,7 +132,7 @@ abstract contract nonReentrant {
 }
 
 /**
- * @title RAM_CEO_TOKEN
+ * @title RAM_TECH_TOKEN
  * @notice Main token contract implementing BEP20/ERC20 with advanced features.
  */
 contract RAM_TECH_TOKEN is Context, IBEP20, Ownable, nonReentrant {
