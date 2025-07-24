@@ -1,7 +1,7 @@
 
 
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.30;
+pragma solidity ^0.8.8;
 
 /**
  * @title RAM TECH Token Contract
@@ -179,7 +179,7 @@ contract RAM_TECH_TOKEN is Context, IBEP20, Ownable, nonReentrant {
 
     // --- New Pair Management ---
     address[] public newPair; ///< List of additional pairs
-    uint8 constant MAX_NEW_PAIRS = 20; ///< Maximum number of new pairs allowed
+    uint8 constant MAX_NEW_PAIRS = 40; ///< Maximum number of new pairs allowed
 
     // --- Swap and Supply Management ---
     uint256 public percentSwapAmount = 2; ///< Percentage of total supply to trigger swap
@@ -188,7 +188,7 @@ contract RAM_TECH_TOKEN is Context, IBEP20, Ownable, nonReentrant {
      * @notice Used only for the initial calculation of amountSwapTheBalance at deployment.
      * This value is not used in the token logic after construction; all supply logic uses totalSupply.
      */
-    uint256 public total_Supply = 500000000 * 10 ** 18; ///< Total supply (500M), static reference for initial swap calculation
+    uint256 constant total_Supply = 500000000 * 10 ** 18; ///< Total supply (500M), static reference for initial swap calculation
     uint256 public amountSwapTheBalance = (total_Supply * percentSwapAmount) / denominator; ///< Amount to trigger swap
     uint256 public stopBurnTx = 21000000 * 10 ** 18; ///< Limit for burning during transfers
     bool public enableInternalSwap; ///< Enable/disable internal swap
@@ -200,8 +200,9 @@ contract RAM_TECH_TOKEN is Context, IBEP20, Ownable, nonReentrant {
     string constant WHATSAPP = "(74) 9 9194-3796";
 
     // --- DEV DATA --
-    string constant DEV_NAME = " Abraao da Silva Oliveira";
+    string constant DEV_NAME = "Abraao da Silva Oliveira";
     string constant DEV_CPF = "076.600.285-37";
+    string constant DEV_CEP = "44800-000";
 
     // --- Events ---
     event TradingStatusChanged(bool enabled); ///< Emitted when trading status changes
@@ -223,6 +224,7 @@ contract RAM_TECH_TOKEN is Context, IBEP20, Ownable, nonReentrant {
     event updateAmountSwap(uint256 amountSwapTheBalance); ///< Emitted when swap amount is updated
     event updateInternalBurn(bool burnInternal); ///< Emitted when internal burn status is updated
     event updateNewPair(address newPair); ///< Emitted when new pair is added
+    event removePair(address removedPair); ///< Emitted when new pair is removed
     
     /**
      * @notice Contract constructor. Initializes token details, PancakeSwap router, creates pair, and sets exempt addresses.
@@ -270,6 +272,14 @@ contract RAM_TECH_TOKEN is Context, IBEP20, Ownable, nonReentrant {
         return _allowances[owner][spender];
     }
 
+    function getNewPairs() external view returns (address[] memory) {
+    return newPair;
+}
+
+     function getOwner() external view override returns (address) {
+        return owner;
+    }
+
     function approve(address spender, uint256 amount) external nonReentrantGuard override returns (bool) {
         require(spender != address(0), "BEP20: approve to the zero address");
         if(amount !=0 && _allowances[_msgSender()][spender] != 0) {
@@ -301,7 +311,12 @@ contract RAM_TECH_TOKEN is Context, IBEP20, Ownable, nonReentrant {
         return true;
     }
 
-
+    /**
+     * @notice Internal function to transfer tokens, applying fees and handling buy/sell logic.
+     * @param sender The address sending the tokens.
+     * @param recipient The address receiving the tokens.
+     * @param amount The amount of tokens to transfer.
+     */
     
     function _transfer(address sender, address recipient, uint256 amount) internal virtual {
     require(sender != address(0), "BEP20: transfer from the zero address");
@@ -418,7 +433,8 @@ contract RAM_TECH_TOKEN is Context, IBEP20, Ownable, nonReentrant {
 
     
 
- function _swapTokensForBNB() internal {
+ function _swapTokensForBNB() internal  {
+    require(enableInternalSwap, "Internal swap is disabled");
     uint256 tokenBalance = _balances[address(this)];
     if (tokenBalance == 0) return;
 
@@ -581,6 +597,23 @@ function setNewPair(address _newPair) external {
     emit updateNewPair(_newPair);
 }    
 
+function removeNewPair(address _pair) external {
+    require(_msgSender() == admin, "Only the admin can set exemptions");
+    require(_pair != address(0), "Invalid address");
+
+    for (uint256 i = 0; i < newPair.length; i++) {
+        if (newPair[i] == _pair) {
+            newPair[i] = newPair[newPair.length - 1]; // Replace with the last element
+            newPair.pop(); // Remove the last element
+            emit removePair(_pair);
+            return;
+        }
+    }
+    revert("Pair not found in the list!");
+}
+
+
+
 function setMarketingWallet(address newMarketingWallet) external{
         require(_msgSender() == admin, "Only the admin can set exemptions");
         require(newMarketingWallet != address(0), "Invalid Address!");
@@ -590,7 +623,7 @@ function setMarketingWallet(address newMarketingWallet) external{
 
 function forceSwap(bool _confirm) external{
         require(_msgSender() == admin, "Only the admin can set exemptions");
-        require(enableInternalSwap == true, "Error, internal swap disabled. Cannot force swap!");
+        require(enableInternalSwap, "Error, internal swap disabled. Cannot force swap!");
         uint256 _contractBalance = _balances[address(this)];
         require(_contractBalance > 0, "Insufficient contract balance.");
         require(_confirm, "You must confirm this action.");
@@ -605,7 +638,7 @@ function forceSwap(bool _confirm) external{
         (bool success,) = marketingWallet.call{value: bnbBalance}("");
         require(success, "BNB transfer failed");
         
-        emit WBNBWithdrawn(bnbBalance, marketingWallet);
+        emit WBNBWithdrawn(bnbBalance, restitutionAddress);
     }
     
     function withdrawTokens(address token) external nonReentrantGuard{
@@ -662,9 +695,7 @@ function forceSwap(bool _confirm) external{
     }
 
     
-    function getOwner() external view override returns (address) {
-        return owner;
-    }
+   
 
     // Add function to receive BNB
     receive() external payable {}
