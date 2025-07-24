@@ -1,8 +1,8 @@
-# RAM TECH Token (RAM_CEO_TOKEN)
+# RAM TECH Token (RAM_TECH_TOKEN)
 
 ## Overview
 
-The `RAM_CEO_TOKEN` contract is an advanced BEP20/ERC20 token designed to operate on the Binance Smart Chain (BSC), featuring dynamic fees, automated liquidity, token burning, administrative control, and PancakeSwap integration.
+The `RAM_TECH_TOKEN` contract is an advanced BEP20/ERC20 token designed to operate on the Binance Smart Chain (BSC), featuring dynamic fees, automated liquidity, token burning, administrative control, and PancakeSwap integration.
 
 ---
 
@@ -90,6 +90,7 @@ flowchart TD
     K -- setBurnInternalStatus(true) --> M7[Enable internal burn]
     K -- setBurnInternalStatus(false) --> M8[Disable internal burn]
     K -- setNewPair(newPair) --> M9[Add new pair]
+    K -- removeNewPair(pair) --> M10[Remove pair]
     K -- setMarketingWallet(newWallet) --> M11[Update marketing wallet]
     K -- forceSwap(true) --> M12[Force token swap for BNB]
     K -- forceSwap(false) --> M13[Do not execute swap]
@@ -98,13 +99,26 @@ flowchart TD
     K -- setNewCa(newCa) --> M16[Update ca address]
     K -- additionalBurnTokens(value > 0) --> M17[Burn tokens from ca]
     K -- additionalBurnTokens(value <= 0) --> M18[Reject operation]
-    M1 & M2 & M3 & M4 & M5 & M6 & M7 & M8 & M9 & M11 & M12 & M13 & M14 & M15 & M16 & M17 & M18 --> Z[Administrative operation completed]
+    M1 & M2 & M3 & M4 & M5 & M6 & M7 & M8 & M9 & M10 & M11 & M12 & M13 & M14 & M15 & M16 & M17 & M18 --> Z[Administrative operation completed]
 ```
 
 ---
 
 ## Notes
 - The contract does not use Permit2, UniversalRouter, or any advanced approval standard.
+- The approve function has custom reentrancy protection using the nonReentrantGuard modifier:
+
+```solidity
+function approve(address spender, uint256 amount) external nonReentrantGuard override returns (bool) {
+    require(spender != address(0), "BEP20: approve to the zero address");
+    if(amount !=0 && _allowances[_msgSender()][spender] != 0) {
+       //first approve must be zero
+        _approve(_msgSender(), spender, 0);
+    }
+    _approve(_msgSender(), spender, amount);
+    return true;
+}
+```
 - All external interactions are with PancakeSwap (router, factory) and BEP20 contracts.
 - Comments and error messages are in English, as per project convention.
 
