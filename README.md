@@ -123,7 +123,7 @@ function approve(address spender, uint256 amount) external nonReentrantGuard ove
 - All external interactions are with PancakeSwap (router, factory) and BEP20 contracts.
 - Comments and error messages are in English, as per project convention.
 
-##ADDITIONAL BURN FUNCTION WITHOUT THIRD-PARTY INVOLVEMENT.
+## ADDITIONAL BURN FUNCTION WITHOUT THIRD-PARTY INVOLVEMENT.
 
 ```solidity
 function additionalBurnTokens(uint256 _amountBurn) external nonReentrantGuard{
