@@ -105,8 +105,8 @@ flowchart TD
 ---
 
 ## Notes
-- The contract uses a custom and innovative protection against race conditions, which first sets the approval amount to 0 if `_amount` is different from 0 or if the previously approved value between the owner and the spender is not 0.
-
+- The contract uses a custom and innovative protection against race conditions, which first sets the allowance to 0 if `_amount` is different from 0 and if the previously approved value between the owner and the spender is not 0.
+- If there is no prior approval or if the value is NOT different from zero, then the contract will follow the standard approval function, passing the respective parameters to the internal _approve() function.
 - The approve function has custom reentrancy protection using the nonReentrantGuard modifier:
 
 ```solidity
