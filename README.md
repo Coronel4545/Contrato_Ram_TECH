@@ -105,7 +105,8 @@ flowchart TD
 ---
 
 ## Notes
-- The contract does not use Permit2, UniversalRouter, or any advanced approval standard.
+- The contract uses a custom and innovative protection against race conditions, which first sets the approval amount to 0 if `_amount` is different from 0 or if the previously approved value between the owner and the spender is not 0.
+
 - The approve function has custom reentrancy protection using the nonReentrantGuard modifier:
 
 ```solidity
