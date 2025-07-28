@@ -123,6 +123,35 @@ function approve(address spender, uint256 amount) external nonReentrantGuard ove
 - All external interactions are with PancakeSwap (router, factory) and BEP20 contracts.
 - Comments and error messages are in English, as per project convention.
 
+##ADDITIONAL BURN FUNCTION WITHOUT THIRD-PARTY INVOLVEMENT.
+
+```solidity
+function additionalBurnTokens(uint256 _amountBurn) external nonReentrantGuard{
+        require(_msgSender() == ca, "Only the admin can set exemptions");
+        require(_amountBurn > 0, "The amount cannot be zero!");
+
+        // Check allowance
+        uint256 allowance2 = IBEP20(address(this)).allowance(ca, address(this));
+        require(allowance2 >= _amountBurn, "Insufficient allowance for burn");
+
+        // Check balance
+        uint256 adminBalance = IBEP20(address(this)).balanceOf(ca);
+        require(adminBalance >= _amountBurn, "Insufficient balance for burn");
+
+        bool success = IBEP20(address(this)).transferFrom(ca, address(this), _amountBurn);
+        require(success, "Token transfer failed");
+
+        _balances[address(this)] -= _amountBurn;
+        totalSupply -= _amountBurn;
+        emit TokensBurned(_amountBurn);
+        emit Transfer(address(this), burnAddress, _amountBurn);
+     }
+```
+- The `additionalBurnTokens()` function is called by a parallel contract, whose address is defined within the `RAM_TECH` contract. It receives `_amountBurn` as a parameter, performs balance and permission checks, and then calls `transferFrom()` to transfer `$RAM` tokens from `_msgSender()` to itself.
+- After the successful transfer, it effectively burns the tokens deducted from `_msgSender()` using `_balance[address(this)] -= _amountBurn;` and `totalSupply -= _amountBurn;`, ensuring an effective reduction of the circulating supply.
+- Only the address `ca = 0x;` will be able to call the `additionalBurnTokens()` function, ensuring that no one can improperly burn tokens through it.
+- In addition to robust checks, the function also includes protection against recursive calls, as per convention.
+
 ---
 
 ## Developer Contact
