@@ -1,5 +1,9 @@
 # RAM TECH Token (RAM_TECH_TOKEN)
-
+---
+# Contract address
+---
+## 0x75bDd7103CB0f3043152a9F732EE679D25607648
+---
 ## Overview
 
 The `RAM_TECH_TOKEN` contract is an advanced BEP20/ERC20 token designed to operate on the Binance Smart Chain (BSC), featuring dynamic fees, automated liquidity, token burning, administrative control, and PancakeSwap integration.
