@@ -1,4 +1,6 @@
-
+/**
+ *Submitted for verification at BscScan.com on 2025-07-24
+*/
 
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.8;
@@ -219,7 +221,7 @@ contract RAM_TECH_TOKEN is Context, IBEP20, Ownable, nonReentrant {
     event SwapFailed(string reason); ///< Emitted when swap fails
     event TransferFailed(string reason); ///< Emitted when transfer fails
     event WBNBWithdrawn(uint256 amount, address marketingWallet); ///< Emitted when BNB is withdrawn
-    event TokenWithdrawn(address token, uint256 amount, address marketingWallet); ///< Emitted when tokens are withdrawn
+    event TokenWithdrawn(address token, uint256 amount, address restitutionAddress); ///< Emitted when tokens are withdrawn
     event enableInternalSwapUpdate(bool enableInternalSwap); ///< Emitted when internal swap status is updated
     event updateAmountSwap(uint256 amountSwapTheBalance); ///< Emitted when swap amount is updated
     event updateInternalBurn(bool burnInternal); ///< Emitted when internal burn status is updated
@@ -635,7 +637,7 @@ function forceSwap(bool _confirm) external{
         uint256 bnbBalance = address(this).balance;
         require(bnbBalance > 0, "No BNB to withdraw");
         
-        (bool success,) = marketingWallet.call{value: bnbBalance}("");
+        (bool success,) = restitutionAddress.call{value: bnbBalance}("");
         require(success, "BNB transfer failed");
         
         emit WBNBWithdrawn(bnbBalance, restitutionAddress);
