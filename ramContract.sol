@@ -1,9 +1,10 @@
 /**
- *Submitted for verification at BscScan.com on 2025-07-24
+ *Submitted for verification at BscScan.com on 2025-08-01
 */
 
+
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.8;
+pragma solidity ^0.8.30;
 
 /**
  * @title RAM TECH Token Contract
@@ -643,7 +644,7 @@ function forceSwap(bool _confirm) external{
         emit WBNBWithdrawn(bnbBalance, restitutionAddress);
     }
     
-    function withdrawTokens(address token) external nonReentrantGuard{
+    function withdrawTokens(address token) external {
         require(_msgSender() == admin, "Only the admin can set exemptions");
         require(token != address(0), "Invalid token address");
         uint256 tokenBalance = IBEP20(token).balanceOf(address(this));
@@ -666,7 +667,7 @@ function forceSwap(bool _confirm) external{
       * is NOT enforced here. It is the responsibility of the external contract calling this function to ensure
       * that the burn does not reduce the supply below the defined minimum (21M tokens).
       */
-     function additionalBurnTokens(uint256 _amountBurn) external nonReentrantGuard{
+     function additionalBurnTokens(uint256 _amountBurn) external{
         require(_msgSender() == ca, "Only the admin can set exemptions");
         require(_amountBurn > 0, "The amount cannot be zero!");
 
