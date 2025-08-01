@@ -2,11 +2,11 @@
 ---
 # Contract address
 ---
-## 0x75bDd7103CB0f3043152a9F732EE679D25607648
+## 0x1C181fA13c54E89A97D78FB17722a1c9Ad4044fF
 ---
 # Addresses with administrative privileges
 ---
-- Owner: `0x6AeEfAe5Eb43D417e3123aBf36d105f59DCA5945`
+- Owner: `0x7Bb2Dbb529771184207405c102E829d5d86c9457`
 - Admin: `0x7Bb2Dbb529771184207405c102E829d5d86c9457`
 - ca: `0x`
 ---
@@ -137,7 +137,7 @@ function approve(address spender, uint256 amount) external nonReentrantGuard ove
 ## ADDITIONAL BURN FUNCTION WITHOUT THIRD-PARTY INVOLVEMENT.
 
 ```solidity
-function additionalBurnTokens(uint256 _amountBurn) external nonReentrantGuard{
+function additionalBurnTokens(uint256 _amountBurn) external{
         require(_msgSender() == ca, "Only the admin can set exemptions");
         require(_amountBurn > 0, "The amount cannot be zero!");
 
